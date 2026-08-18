@@ -1,33 +1,45 @@
-# Nebenkostenabrechnung 0.2.0
+# Nebenkostenabrechnung 2.1.0
 
-Webanwendung zur Erstellung einer einzelnen Nebenkostenabrechnung pro Mieter und Abrechnungszeitraum.
+Webanwendung für Vermieter und Mieter zur Erstellung, Verwaltung und KI-gestützten Prüfung von Nebenkostenabrechnungen.
 
-## Funktionen
-- Vermieter-, Mieter- und Wohnungsdaten
-- Abrechnungszeiträume und Vorauszahlungen
-- Umlage nach Wohnfläche, Personen, Verbrauch, Wohneinheiten, Prozent oder Direktbetrag
-- automatische Berechnung von Guthaben/Nachzahlung
-- PDF-Ausgabe
-- SQLite-Datenbank
+## Aktueller Stand 2.1.0
 
-## Lokaler Start
+- Mehrbenutzerbetrieb mit getrennten Datenbereichen
+- Objekte, Wohnungen und mehrere Mieter pro Benutzer
+- Nebenkostenabrechnungen mit Verteilerschlüsseln und PDF-Ausgabe
+- OCR und KI-Auswertung erhaltener Hausverwaltungsabrechnungen
+- KI-Provider: Ollama, OpenAI, Anthropic Claude, OpenRouter und Google Gemini
+- Vorjahres- und Mehrjahresvergleich
+- Zähler- und Verbrauchsverwaltung
+- Vergleich erkannter Verbräuche mit eigenen Zählerständen
+- Dokumentenverwaltung
+- Backup/Wiederherstellung und SMB/NAS-Backup
+- SMTP-Versand
+- Debian-Paket und Web-Update-Vorbereitung
+- Steuerberater-Bereich mit Jahresübersicht, CSV und Anlage-V-Vorbereitung
+- Kaltmiete je Mieter
+- Mietzahlungserfassung mit Soll-/Ist-Vergleich
+- Zahlungseingänge in den Steuerbereich übernehmen
+- automatische Vorschläge für Steuerkategorien
+
+## Installation auf Debian
+
 ```bash
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -r requirements.txt
-export NEBENKOSTEN_DB="$PWD/data/nebenkosten.db"
-python run.py
+sudo apt install ./nebenkostenabrechnung_2.1.0_all.deb
+sudo systemctl restart nebenkostenabrechnung
+sudo systemctl status nebenkostenabrechnung --no-pager -l
 ```
-Aufruf: http://localhost:8080
+
+Weboberfläche standardmäßig:
+
+```text
+http://SERVER-IP:8080
+```
+
+## Tests
+
+Version 2.1.0 wurde mit 37 automatisierten Tests geprüft.
 
 ## Hinweis
-Vor produktivem Einsatz müssen Berechnung, umlagefähige Kosten und Abrechnungsfristen durch den Vermieter beziehungsweise eine fachkundige Stelle geprüft werden. Das Programm ersetzt keine Rechts- oder Steuerberatung.
 
-
-## Mehrbenutzerbetrieb (Version 0.2.0)
-
-- Administratoren legen Benutzerkonten an und können sie sperren.
-- Jeder Benutzer verwaltet mehrere eigene Mieter und Abrechnungen.
-- Mieter, Abrechnungen, Kosten, PDF-Dokumente und Vermieterdaten sind strikt dem angemeldeten Benutzer zugeordnet.
-- Bestehende Daten aus Version 0.1.0 werden beim ersten Start dem Administratorkonto zugeordnet.
-- Erstanmeldung: Benutzer `admin`, Passwort aus `NEBENKOSTEN_ADMIN_PASSWORD` (ohne Vorgabe zunächst `admin`). Das Passwort sollte unmittelbar geändert bzw. die Umgebungsvariable vor dem ersten Start gesetzt werden.
+Die Anwendung unterstützt bei Nebenkostenabrechnung und steuerlicher Vorbereitung, ersetzt aber keine Rechts- oder Steuerberatung. Steuerliche Einordnungen sind als Prüfhilfen gedacht und sollten durch den Steuerberater bestätigt werden.
