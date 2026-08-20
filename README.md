@@ -1,45 +1,37 @@
-# Nebenkostenabrechnung 2.1.0
+# Nebenkostenabrechnung 1.4.0
 
-Webanwendung für Vermieter und Mieter zur Erstellung, Verwaltung und KI-gestützten Prüfung von Nebenkostenabrechnungen.
+Webanwendung zur Verwaltung und Erstellung von Nebenkostenabrechnungen mit mehreren Benutzern, Objekten, Wohnungen und Mietern. Zusätzlich können erhaltene Abrechnungen der Hausverwaltung lokal eingelesen und geprüft werden.
 
-## Aktueller Stand 2.1.0
-
+## Funktionen
 - Mehrbenutzerbetrieb mit getrennten Datenbereichen
-- Objekte, Wohnungen und mehrere Mieter pro Benutzer
-- Nebenkostenabrechnungen mit Verteilerschlüsseln und PDF-Ausgabe
-- OCR und KI-Auswertung erhaltener Hausverwaltungsabrechnungen
-- KI-Provider: Ollama, OpenAI, Anthropic Claude, OpenRouter und Google Gemini
-- Vorjahres- und Mehrjahresvergleich
-- Zähler- und Verbrauchsverwaltung
-- Vergleich erkannter Verbräuche mit eigenen Zählerständen
-- Dokumentenverwaltung
-- Backup/Wiederherstellung und SMB/NAS-Backup
-- SMTP-Versand
-- Debian-Paket und Web-Update-Vorbereitung
-- Steuerberater-Bereich mit Jahresübersicht, CSV und Anlage-V-Vorbereitung
-- Kaltmiete je Mieter
-- Mietzahlungserfassung mit Soll-/Ist-Vergleich
-- Zahlungseingänge in den Steuerbereich übernehmen
-- automatische Vorschläge für Steuerkategorien
+- Objekte, Wohnungen und mehrere Mieter
+- eigene Abrechnungen, Vorauszahlungen und Kostenverteilung
+- PDF-Ausgabe
+- Upload erhaltener PDF-, Scan- und Bildabrechnungen
+- lokale Textauslesung und Tesseract-OCR
+- Erkennung von Zeitraum, Kostenpositionen, Mieteranteilen und Verteilerschlüsseln
+- Plausibilitätsprüfungen
+- Vorjahresvergleich je Mieter
+- Kennzeichnung auffälliger Kostenänderungen
 
-## Installation auf Debian
-
+## Installation
 ```bash
-sudo apt install ./nebenkostenabrechnung_2.1.0_all.deb
-sudo systemctl restart nebenkostenabrechnung
-sudo systemctl status nebenkostenabrechnung --no-pager -l
+sudo ./install.sh
 ```
+Danach: `http://SERVER-IP:8080`
 
-Weboberfläche standardmäßig:
-
-```text
-http://SERVER-IP:8080
-```
-
-## Tests
-
-Version 2.1.0 wurde mit 37 automatisierten Tests geprüft.
+## Datenschutz
+Die Dokumentanalyse läuft in Version 1.3 lokal. Es werden ohne weitere Konfiguration keine Dokumente an einen Cloud-KI-Anbieter gesendet.
 
 ## Hinweis
+Automatische Erkennung kann Fehler enthalten. Ergebnisse müssen vor Verwendung geprüft werden. Die Anwendung ersetzt keine Rechts- oder Steuerberatung.
 
-Die Anwendung unterstützt bei Nebenkostenabrechnung und steuerlicher Vorbereitung, ersetzt aber keine Rechts- oder Steuerberatung. Steuerliche Einordnungen sind als Prüfhilfen gedacht und sollten durch den Steuerberater bestätigt werden.
+
+## Version 2.9.1
+
+Dieser Quellstand wurde aus dem vollstaendigen Entwicklungsarchiv 2.3.0 und
+dem installierbaren Anwendungscode des Debian-Pakets 2.9.1 rekonstruiert.
+- Zähler- und Verbrauchsverwaltung
+- SMTP-E-Mail-Versand
+- SMB/NAS-Backup
+- Updateinstallation aus der Weboberfläche

@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+FILE="${1:-}"
+case "$FILE" in /var/lib/nebenkostenabrechnung/updates/nebenkostenabrechnung_*_all.deb) ;; *) echo "Ungültiger Paketpfad" >&2; exit 2;; esac
+[ -f "$FILE" ] || exit 3
+[ "$(dpkg-deb -f "$FILE" Package)" = "nebenkostenabrechnung" ] || exit 4
+/usr/bin/apt-get install -y "$FILE"

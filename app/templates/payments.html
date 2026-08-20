@@ -1,0 +1,40 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Mietzahlungen</h1>
+<section class="panel">
+<form method="get"><label>Jahr <input name="year" type="number" value="{{year}}"></label><button>Anzeigen</button></form>
+<h2>Soll-/Ist-Kaltmiete</h2>
+<table><thead><tr><th>Mieter</th><th>Soll Kaltmiete</th><th>Soll Nebenkosten</th><th>Soll Gesamt</th><th>Ist Zahlungen</th><th>Differenz</th></tr></thead><tbody>
+{% for x in schedules %}<tr><td>{{x.tenant.name}}</td><td>{{"%.2f"|format(x.expected_rent)}} €</td><td>{{"%.2f"|format(x.expected_operating)}} €</td><td>{{"%.2f"|format(x.expected)}} €</td><td>{{"%.2f"|format(x.paid)}} €</td><td>{{"%.2f"|format(x.difference)}} €</td></tr>{% endfor %}
+</tbody></table>
+</section>
+{% if request.query_params.get('csv_imported') is not none %}
+<section class="panel"><h2>CSV-Import Ergebnis</h2>
+<p>Importiert: <b>{{request.query_params.get('csv_imported')}}</b> · Übersprungen: <b>{{request.query_params.get('csv_skipped')}}</b> · Dubletten: <b>{{request.query_params.get('csv_duplicates')}}</b></p>
+</section>{% endif %}
+<section class="panel"><h2>CSV-Datei importieren</h2>
+<form method="post" action="/payments/preview-csv" enctype="multipart/form-data" class="formgrid">
+<label>CSV-Datei<input type="file" name="csv_file" accept=".csv,text/csv" required></label>
+<label>Standard-Zahlungsart<select name="default_type"><option value="rent">Kaltmiete</option><option value="operating_advance">Nebenkosten-Vorauszahlung</option><option value="other">Sonstige Einnahme</option></select></label>
+<label>Optional fester Mieter<select name="default_tenant_id"><option value="0">Automatisch erkennen</option>{% for t in tenants %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></label>
+<div class="full"><button>CSV prüfen</button></div>
+</form>
+<p>Unterstützt typische Bank-CSV-Dateien mit Spalten wie Buchungstag/Datum, Betrag/Umsatz, Verwendungszweck und Auftraggeber/Zahlungspflichtiger. Positive Zahlungseingänge werden importiert; negative Buchungen und unklare Mieterzuordnungen werden übersprungen. Bereits importierte identische Buchungen werden als Dublette erkannt.</p>
+</section>
+<section class="panel"><h2>Monatsabgleich</h2>
+<table><thead><tr><th>Monat</th><th>Mieter</th><th>Soll Gesamt</th><th>Ist</th><th>Kaltmiete</th><th>Nebenkosten</th><th>Rest</th><th>Differenz</th><th>Status</th></tr></thead>
+<tbody>{% for x in monthly %}<tr><td>{{x.month}}</td><td>{{x.tenant.name}}</td><td>{{"%.2f"|format(x.expected)}} €</td><td>{{"%.2f"|format(x.total_paid)}} €</td><td>{{"%.2f"|format(x.rent)}} €</td><td>{{"%.2f"|format(x.operating)}} €</td><td>{{"%.2f"|format(x.other)}} €</td><td>{{"%.2f"|format(x.difference)}} €</td><td>{{x.status}}</td></tr>{% endfor %}</tbody></table>
+<p>Alle positiven Zahlungseingänge eines Monats werden gemeinsam betrachtet. Dadurch funktionieren sowohl eine gemeinsame Überweisung für Kaltmiete + Nebenkosten als auch mehrere getrennte oder teilweise Überweisungen.</p>
+</section>
+<section class="panel"><h2>Zahlung erfassen</h2>
+<form method="post" class="formgrid">
+<label>Mieter<select name="tenant_id">{% for t in tenants %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></label>
+<label>Datum<input type="date" name="payment_date" required></label>
+<label>Betrag €<input type="number" step="0.01" name="amount" required></label>
+<label>Art<select name="payment_type"><option value="rent">Kaltmiete</option><option value="operating_advance">Nebenkosten-Vorauszahlung</option><option value="other">Sonstige Einnahme</option></select></label>
+<label>Referenz<input name="reference"></label><label>Notiz<input name="notes"></label><div class="full"><button>Speichern</button></div>
+</form></section>
+<section class="panel"><h2>Zahlungen {{year}}</h2>
+<table><thead><tr><th>Datum</th><th>Mieter</th><th>Art</th><th>Betrag</th><th>Referenz</th><th>Kaltmiete</th><th>Nebenkosten</th><th>Rest</th><th>Steuer</th></tr></thead><tbody>
+{% for p in payments %}<tr><td>{{p.payment_date}}</td><td>{{p.tenant_name}}</td><td>{{p.payment_type}}</td><td>{{"%.2f"|format(p.amount)}} €</td><td>{{p.reference or ''}}</td><td>{{"%.2f"|format(p.rent_part or 0)}} €</td><td>{{"%.2f"|format(p.operating_part or 0)}} €</td><td>{{"%.2f"|format(p.other_part or 0)}} €</td><td>{% if p.tax_entry_id %}übernommen{% else %}<form method="post" action="/payments/{{p.id}}/tax"><button>übernehmen</button></form>{% endif %}</td></tr>{% endfor %}
+</tbody></table></section>
+{% endblock %}

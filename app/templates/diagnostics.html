@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block content %}
+<div class="title"><div><h1>Produktionscheck</h1><p>Release-Check für Datenbank, Speicher, Secrets, Integrationen und Backups.</p></div><a class="button" href="/system">Zurück zum System</a></div>
+<section class="cards">
+<div class="card"><span>OK</span><strong>{{summary.ok}}</strong></div>
+<div class="card"><span>Warnungen</span><strong>{{summary.warn}}</strong></div>
+<div class="card"><span>Fehler</span><strong>{{summary.error}}</strong></div>
+<div class="card"><span>Release-Status</span><strong>{{'BEREIT' if summary.ready else 'PRÜFEN'}}</strong></div>
+</section>
+<section class="panel"><h2>Prüfpunkte</h2><table><thead><tr><th>Status</th><th>Prüfung</th><th>Details</th></tr></thead><tbody>
+{% for c in checks %}<tr><td class="{{'ok' if c.level=='ok' else 'warn'}}">{{'OK' if c.level=='ok' else ('WARNUNG' if c.level=='warn' else 'FEHLER')}}</td><td>{{c.label}}</td><td>{{c.detail}}</td></tr>{% endfor %}
+</tbody></table></section>
+<section class="panel"><h2>Letztes Backup</h2>
+{% if latest_backup %}<p><b>{{latest_backup.name}}</b>: <span class="{{'ok' if latest_backup.ok else 'warn'}}">{{'gültig' if latest_backup.ok else 'fehlerhaft'}}</span></p><p>{{latest_backup.detail}}</p>
+{% else %}<p class="warn">Noch kein Backup vorhanden. Vor 3.0.0 sollte mindestens ein Backup erzeugt und validiert werden.</p>{% endif %}
+</section>
+<section class="panel"><h2>Vor 3.0.0</h2><p>Für die endgültige Freigabe sollte dieser Check ohne Fehler laufen. Optionale, bewusst deaktivierte Integrationen gelten nicht als Fehler.</p></section>
+{% endblock %}

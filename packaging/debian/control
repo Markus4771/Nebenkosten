@@ -1,0 +1,9 @@
+Package: nebenkostenabrechnung
+Version: 2.9.1
+Section: web
+Priority: optional
+Architecture: all
+Maintainer: Nebenkostenabrechnung
+Depends: python3, python3-venv, tesseract-ocr, tesseract-ocr-deu, poppler-utils, smbclient, sudo
+Description: Webanwendung zur Nebenkostenabrechnung und KI-gestützten Analyse
+ Mehrbenutzerfähige Anwendung mit OCR, Dokumentenverwaltung, Backup und PDF-Ausgabe.

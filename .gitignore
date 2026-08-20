@@ -1,0 +1,10 @@
+.venv/
+.python_packages/
+__pycache__/
+*.pyc
+*.db
+data/
+dist/
+build/
+*.deb
+*.sha256

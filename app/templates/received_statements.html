@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block content %}
+<h1>Erhaltene Abrechnungen</h1>
+<div class="grid"><section class="card"><h2>Dokument einlesen</h2>
+<form method="post" action="/received-statements/upload" enctype="multipart/form-data">
+<label>PDF, Scan oder Foto<input type="file" name="document" required accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.txt,.csv"></label>
+<label>Mieter (optional)<select name="tenant_id"><option value="0">Noch nicht zuordnen</option>{% for t in tenants %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></label>
+<button>Hochladen und auswerten</button><p class="muted">Maximal 25 MB. Text-PDFs werden direkt gelesen; Bilder benötigen Tesseract OCR.</p></form></section>
+<section class="card"><h2>Datenschutz</h2><p>Die Erkennung läuft lokal auf diesem Server. Das Dokument wird nicht automatisch an einen Cloud-KI-Anbieter übertragen.</p></section></div>
+<section class="card"><h2>Archiv</h2><table><tr><th>Dokument</th><th>Mieter</th><th>Methode</th><th>Status</th><th>Datum</th></tr>{% for d in docs %}<tr><td><a href="/received-statements/{{d.id}}">{{d.original_name}}</a></td><td>{{d.tenant_name or '–'}}</td><td>{{d.extraction_method}}</td><td>{{d.status}}</td><td>{{d.created_at}}</td></tr>{% else %}<tr><td colspan="5">Noch keine Dokumente vorhanden.</td></tr>{% endfor %}</table></section>
+{% endblock %}
