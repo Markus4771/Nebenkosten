@@ -1,0 +1,23 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Benutzerverwaltung</h1>
+<p>Manager bearbeiten ausschließlich ihre eigenen Daten. Viewer haben nur Lesezugriff. Administratoren verwalten zusätzlich Benutzer und Systemfunktionen.</p>
+{% if error %}<p class="error">{{error}}</p>{% endif %}
+<section class="panel"><h2>Benutzer anlegen</h2>
+<form method="post" class="formgrid">
+<label>Benutzername<input name="username" required></label>
+<label>Anzeigename<input name="display_name" required></label>
+<label>Startpasswort<input type="password" name="password" minlength="8" required></label>
+<label>Rolle<select name="role"><option value="manager">Manager – eigene Daten bearbeiten</option><option value="viewer">Viewer – nur lesen</option></select></label>
+<label><span>Administrator</span><select name="is_admin"><option value="0">Nein</option><option value="1">Ja</option></select></label>
+<div class="full"><button>Benutzer anlegen</button></div></form></section>
+
+<section class="panel"><h2>Vorhandene Benutzer</h2>
+<table><thead><tr><th>Benutzername</th><th>Name</th><th>Rolle</th><th>Admin</th><th>Status</th><th>Aktion</th></tr></thead><tbody>
+{% for u in users %}<tr><td>{{u.username}}</td><td>{{u.display_name}}</td>
+<td>{% if u.is_admin %}Administrator{% elif u.role=='viewer' %}Viewer{% else %}Manager{% endif %}</td>
+<td>{{'Ja' if u.is_admin else 'Nein'}}</td><td>{{'Aktiv' if u.active else 'Gesperrt'}}</td>
+<td>{% if u.id != current_user.id %}
+{% if not u.is_admin %}<form method="post" action="/users/{{u.id}}/role" class="inline"><select name="role"><option value="manager" {% if u.role=='manager' %}selected{% endif %}>Manager</option><option value="viewer" {% if u.role=='viewer' %}selected{% endif %}>Viewer</option></select><button>Rolle setzen</button></form>{% endif %}
+<form method="post" action="/users/{{u.id}}/toggle" class="inline"><button>{{'Sperren' if u.active else 'Aktivieren'}}</button></form>
+{% endif %}</td></tr>{% endfor %}
+</tbody></table></section>{% endblock %}

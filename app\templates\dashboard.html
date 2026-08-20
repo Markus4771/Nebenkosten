@@ -1,0 +1,28 @@
+{% extends 'base.html' %}{% block content %}
+<div class="title"><div><h1>Dashboard</h1><p>Zentrale Übersicht für Abrechnung, Zahlungen, Belege und Steuerjahr.</p></div>{% if current_user.is_admin or current_user.role!="viewer" %}<a class="button" href="/statement/new">Abrechnung anlegen</a>{% else %}<span class="hint">Nur-Lese-Zugriff</span>{% endif %}</div>
+
+<section class="cards">
+<div class="card"><span>Mieter</span><strong>{{tenants|length}}</strong></div>
+<div class="card"><span>Abrechnungen</span><strong>{{statements|length}}</strong></div>
+<div class="card"><span>Offene Aufgaben</span><strong>{{tasks.total}}</strong></div>
+<div class="card"><span>Mietrückstände {{current_month}}</span><strong>{{tasks.arrears}}</strong></div>
+</section>
+
+<section class="panel"><h2>Offene Aufgaben</h2>
+<table><thead><tr><th>Bereich</th><th>Anzahl</th><th>Aktion</th></tr></thead><tbody>
+<tr><td>Fehlende Steuerbelege</td><td>{{tasks.missing_receipts}}</td><td><a href="/tax-advisor">Steuerberater</a></td></tr>
+<tr><td>Ungeprüfte KI-Belegvorschläge</td><td>{{tasks.ai_pending}}</td><td><a href="/documents">Dokumente prüfen</a></td></tr>
+<tr><td>Paperless-Synchronisationsfehler</td><td>{{tasks.paperless_errors}}</td><td><a href="/documents">Paperless prüfen</a></td></tr>
+<tr><td>Steuerpositionen „prüfen“</td><td>{{tasks.tax_review}}</td><td><a href="/tax-advisor">Steuerjahr prüfen</a></td></tr>
+<tr><td>Abrechnungen im Entwurf</td><td>{{tasks.draft_statements}}</td><td><a href="/">Abrechnungen</a></td></tr>
+</tbody></table></section>
+
+{% if arrears %}<section class="panel"><h2>Mietrückstände / Unterzahlungen {{current_month}}</h2>
+<table><thead><tr><th>Mieter</th><th>Soll</th><th>Ist</th><th>Fehlt</th></tr></thead><tbody>
+{% for x in arrears %}<tr><td>{{x.tenant_name}}</td><td>{{"%.2f"|format(x.expected)}} €</td><td>{{"%.2f"|format(x.paid)}} €</td><td class="warn">{{"%.2f"|format(-x.difference)}} €</td></tr>{% endfor %}
+</tbody></table></section>{% endif %}
+
+<section class="panel"><h2>Abrechnungen</h2><table><thead><tr><th>Mieter</th><th>Zeitraum</th><th>Kostenanteil</th><th>Vorauszahlung</th><th>Ergebnis</th><th>Status</th><th></th></tr></thead><tbody>
+{% for s in statements %}{% set result=s.cost_total-s.advance_payments %}<tr><td>{{s.tenant_name}}</td><td>{{s.period_start}} – {{s.period_end}}</td><td>{{'%.2f'|format(s.cost_total)}} €</td><td>{{'%.2f'|format(s.advance_payments)}} €</td><td class="{{'warn' if result>0 else 'ok'}}">{{'Nachzahlung' if result>=0 else 'Guthaben'}} {{'%.2f'|format(result|abs)}} €</td><td>{{s.status}}</td><td><a href="/statement/{{s.id}}">Öffnen</a></td></tr>
+{% else %}<tr><td colspan="7">Noch keine Abrechnung vorhanden.</td></tr>{% endfor %}</tbody></table></section>
+{% endblock %}

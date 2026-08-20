@@ -1,0 +1,1 @@
+nebenkosten ALL=(root) NOPASSWD: /usr/local/sbin/nebenkosten-install-update /var/lib/nebenkostenabrechnung/updates/nebenkostenabrechnung_*_all.deb

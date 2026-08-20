@@ -1,0 +1,55 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Einstellungen</h1>
+<form method="post" class="panel formgrid">
+<h2 class="full">Vermieterdaten</h2>
+<label>Name / Firma<input name="landlord_name" value="{{settings.landlord_name or ''}}"></label>
+<label>Anschrift<textarea name="landlord_address">{{settings.landlord_address or ''}}</textarea></label>
+<label>E-Mail<input type="email" name="landlord_email" value="{{settings.landlord_email or ''}}"></label>
+<label>Telefon<input name="landlord_phone" value="{{settings.landlord_phone or ''}}"></label>
+<label>IBAN<input name="iban" value="{{settings.iban or ''}}"></label>
+
+<h2 class="full">KI-Provider</h2>
+<label>Provider<select name="ai_provider">
+<option value="none" {% if settings.ai_provider=='none' or not settings.ai_provider %}selected{% endif %}>Keine KI</option>
+<option value="ollama" {% if settings.ai_provider=='ollama' %}selected{% endif %}>Ollama lokal</option>
+<option value="openai" {% if settings.ai_provider=='openai' %}selected{% endif %}>OpenAI</option>
+<option value="anthropic" {% if settings.ai_provider=='anthropic' %}selected{% endif %}>Anthropic Claude</option>
+<option value="openrouter" {% if settings.ai_provider=='openrouter' %}selected{% endif %}>OpenRouter</option>
+<option value="gemini" {% if settings.ai_provider=='gemini' %}selected{% endif %}>Google Gemini</option>
+</select></label>
+<label>Modell<input name="ai_model" list="ai-model-list" value="{{settings.ai_model or ''}}" placeholder="Modell auswählen oder eintragen"><datalist id="ai-model-list"></datalist></label>
+<label>Basis-URL<input name="ai_base_url" value="{{settings.ai_base_url or ''}}" placeholder="leer = Provider-Standard"></label>
+<label>API-Key<input type="password" name="ai_api_key" value="" placeholder="leer = vorhandenen Schlüssel behalten"></label>
+<label>OpenRouter HTTP-Referer (optional)<input name="ai_referer" value="{{settings.ai_referer or ''}}" placeholder="https://deine-domain.example"></label>
+<label>OpenRouter App-Name<input name="ai_app_title" value="{{settings.ai_app_title or 'Nebenkostenabrechnung'}}"></label>
+<div class="full"><button type="button" onclick="testAI()">KI-Verbindung testen</button> <button type="button" onclick="loadModels()">Modelle laden</button> <span id="ai-status"></span></div>
+<p class="full">Für maximale Datenhoheit kann Ollama lokal verwendet werden. OpenRouter bündelt viele Modelle unter einem API-Key. Google Gemini kann ebenfalls direkt über einen eigenen Gemini-API-Key verwendet werden. API-Schlüssel werden derzeit lokal in der Anwendungsdatenbank gespeichert.</p>
+
+<h2 class="full">E-Mail / SMTP</h2>
+<label>SMTP-Server<input name="smtp_host" value="{{settings.smtp_host or ''}}"></label>
+<label>Port<input name="smtp_port" type="number" value="{{settings.smtp_port or 587}}"></label>
+<label>Benutzer<input name="smtp_user" value="{{settings.smtp_user or ''}}"></label>
+<label>Passwort<input name="smtp_password" type="password" placeholder="leer = bestehendes beibehalten"></label>
+<label>Absender<input name="smtp_from" type="email" value="{{settings.smtp_from or ''}}"></label>
+<label>Sicherheit<select name="smtp_security"><option value="starttls" {% if settings.smtp_security=='starttls' %}selected{% endif %}>STARTTLS</option><option value="ssl" {% if settings.smtp_security=='ssl' %}selected{% endif %}>SSL/TLS</option><option value="none" {% if settings.smtp_security=='none' %}selected{% endif %}>Keine</option></select></label>
+
+<div class="full"><button>Alle Einstellungen speichern</button></div>
+</form>
+
+<form method="post" action="/settings/paperless" class="panel formgrid">
+<h2 class="full">Paperless-ngx (optional)</h2>
+<label><input type="checkbox" name="paperless_enabled" value="1" {% if settings.paperless_enabled %}checked{% endif %}> Paperless aktivieren</label>
+<label>Paperless-URL<input name="paperless_url" value="{{settings.paperless_url or ''}}" placeholder="https://paperless.example.de"></label>
+<label>API-Token<input type="password" name="paperless_token" value="" placeholder="leer = vorhandenen Token behalten"></label>
+<label><input type="checkbox" name="paperless_auto_upload" value="1" {% if settings.paperless_auto_upload %}checked{% endif %}> Neue Belege automatisch zusätzlich an Paperless senden</label>
+<label class="full">Standard-Tags, durch Komma getrennt<input name="paperless_default_tags" value="{{settings.paperless_default_tags or 'Nebenkosten,Vermietung'}}"></label>
+<div class="full"><button>Paperless-Einstellungen speichern</button> <button type="button" onclick="testPaperless()">Paperless-Verbindung testen</button> <span id="paperless-status"></span></div>
+<p class="full">Die Integration ist vollständig optional. Ohne Aktivierung bleiben alle Dokumente ausschließlich in der lokalen Dokumentenverwaltung.</p>
+</form>
+
+<script>
+async function testAI(){const e=document.getElementById('ai-status');e.textContent=' prüfe…';try{const r=await fetch('/settings/ai-test');const j=await r.json();e.textContent=j.ok?' '+j.message:' Fehler: '+j.error;}catch(x){e.textContent=' Fehler: '+x;}}
+async function loadModels(){const e=document.getElementById('ai-status');e.textContent=' lade Modelle…';try{const r=await fetch('/settings/ai-models');const j=await r.json();if(!j.ok){e.textContent=' Fehler: '+j.error;return;}const d=document.getElementById('ai-model-list');d.innerHTML='';for(const m of j.models){const o=document.createElement('option');o.value=m.id;o.label=m.name;d.appendChild(o);}e.textContent=' '+j.models.length+' Modelle geladen.';}catch(x){e.textContent=' Fehler: '+x;}}
+async function testPaperless(){const e=document.getElementById('paperless-status');e.textContent=' prüfe…';try{const r=await fetch('/settings/paperless-test');const j=await r.json();e.textContent=j.ok?' verbunden'+(j.server_version?' · '+j.server_version:''):' Fehler: '+j.error;}catch(x){e.textContent=' Fehler: '+x;}}
+</script>
+{% endblock %}
