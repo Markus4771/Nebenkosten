@@ -1,0 +1,3 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Objekte</h1><div class="grid">{% for p in properties %}<section class="card"><h2><a href="/property/{{p.id}}">{{p.name}}</a></h2><p>{{p.address}}</p><p>{{p.apartment_count}} Wohnungen · {{p.tenant_count}} Mieter</p></section>{% endfor %}</div>
+<section class="card"><h2>Objekt anlegen</h2><form method="post"><label>Name<input name="name" required></label><label>Anschrift<input name="address"></label><label>Notizen<textarea name="notes"></textarea></label><button>Anlegen</button></form></section>{% endblock %}

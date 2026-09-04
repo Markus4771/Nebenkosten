@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block content %}
+<h1>CSV-Import prüfen</h1>
+<section class="panel"><p>Prüfe die erkannten Buchungen. Du kannst Mieter und Zahlungsart vor der endgültigen Übernahme ändern oder einzelne Zeilen abwählen.</p>
+<form method="post" action="/payments/confirm-csv">
+<input type="hidden" name="preview_id" value="{{preview_id}}">
+<table><thead><tr><th>Übernehmen</th><th>Datum</th><th>Betrag</th><th>Referenz</th><th>Erkennung</th><th>Mieter</th><th>Zahlungsart</th></tr></thead><tbody>
+{% for r in rows %}<tr>
+<td><input type="checkbox" name="include_{{loop.index0}}" value="1" checked></td>
+<td>{{r.payment_date}}</td><td>{{"%.2f"|format(r.amount)}} €</td><td>{{r.reference}}</td><td>{{r.match}}</td>
+<td><select name="tenant_{{loop.index0}}">{% for t in tenants %}<option value="{{t.id}}" {% if t.id==r.tenant_id %}selected{% endif %}>{{t.name}}</option>{% endfor %}</select></td>
+<td><select name="type_{{loop.index0}}"><option value="rent" {% if r.payment_type=='rent' %}selected{% endif %}>Kaltmiete</option><option value="operating_advance" {% if r.payment_type=='operating_advance' %}selected{% endif %}>Nebenkosten</option><option value="other" {% if r.payment_type=='other' %}selected{% endif %}>Sonstige Einnahme</option></select></td>
+</tr>{% endfor %}</tbody></table>
+<p><button>Ausgewählte Zahlungen übernehmen</button> <a href="/payments">Abbrechen</a></p>
+</form></section>
+{% if skipped %}<section class="panel"><h2>Nicht automatisch übernommene Zeilen</h2><table><tr><th>Zeile</th><th>Grund</th></tr>{% for x in skipped %}<tr><td>{{x.line}}</td><td>{{x.reason}}</td></tr>{% endfor %}</table></section>{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+id nebenkosten >/dev/null 2>&1 || useradd --system --home /var/lib/nebenkostenabrechnung --shell /usr/sbin/nologin nebenkosten
+mkdir -p /var/lib/nebenkostenabrechnung/uploads /var/lib/nebenkostenabrechnung/documents /var/lib/nebenkostenabrechnung/backups /var/lib/nebenkostenabrechnung/updates /var/lib/nebenkostenabrechnung/secrets /var/lib/nebenkostenabrechnung/csv-previews
+chown -R nebenkosten:nebenkosten /var/lib/nebenkostenabrechnung /opt/nebenkostenabrechnung
+chmod 0700 /var/lib/nebenkostenabrechnung/secrets
+chmod 0750 /var/lib/nebenkostenabrechnung/csv-previews
+FIRST_PASSWORD=""
+if [ ! -f /etc/default/nebenkostenabrechnung ]; then
+  umask 077
+  SECRET=$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')
+  PASS=$(python3 -c 'import secrets; print(secrets.token_urlsafe(12))')
+  FIRST_PASSWORD="$PASS"
+  printf 'NEBENKOSTEN_SESSION_SECRET=%s\nNEBENKOSTEN_ADMIN_PASSWORD=%s\n' "$SECRET" "$PASS" > /etc/default/nebenkostenabrechnung
+  umask 022
+fi
+python3 -m venv /opt/nebenkostenabrechnung/venv
+/opt/nebenkostenabrechnung/venv/bin/pip install --upgrade pip >/dev/null
+/opt/nebenkostenabrechnung/venv/bin/pip install -r /opt/nebenkostenabrechnung/requirements.txt >/dev/null
+chown -R nebenkosten:nebenkosten /opt/nebenkostenabrechnung/venv
+chmod -R u+rwX,go+rX /opt/nebenkostenabrechnung/venv
+install -m 0755 /opt/nebenkostenabrechnung/packaging/debian/nebenkosten-install-update /usr/local/sbin/nebenkosten-install-update
+install -m 0440 /opt/nebenkostenabrechnung/packaging/debian/nebenkosten-update-sudoers /etc/sudoers.d/nebenkosten-update
+systemctl daemon-reload
+systemctl enable --now nebenkostenabrechnung.service || true
+echo "Installation abgeschlossen. Weboberfläche: http://SERVER-IP:8080"
+echo "Erster Benutzer: admin"
+if [ -n "$FIRST_PASSWORD" ]; then
+  echo "Einmaliges Startpasswort: $FIRST_PASSWORD"
+else
+  echo "Das Startpasswort wurde bei einer früheren Installation erzeugt."
+fi

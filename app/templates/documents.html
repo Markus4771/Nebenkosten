@@ -1,0 +1,47 @@
+{% extends 'base.html' %}{% block content %}
+<div class="title"><h1>Dokumente & Steuerbelege</h1></div>
+<div class="grid"><section class="card"><h2>Dokument hochladen</h2>
+<form method="post" action="/documents/upload" enctype="multipart/form-data">
+<label>Titel<input name="title" required></label>
+<label>Kategorie<select name="category">{% for c in ['Nebenkosten','Mietvertrag','Übergabeprotokoll','Schriftverkehr','Beleg','Rechnung','Grundsteuer','Versicherung','Darlehen','Foto','Sonstiges'] %}<option>{{c}}</option>{% endfor %}</select></label>
+<label>Mieter<select name="tenant_id"><option value="0">Nicht zugeordnet</option>{% for t in tenants %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></label>
+<label>Objekt<select name="property_id"><option value="0">Nicht zugeordnet</option>{% for p in properties %}<option value="{{p.id}}">{{p.name}}</option>{% endfor %}</select></label>
+<label>Steuerjahr<input name="tax_year" type="number" value="{{tax_year}}" min="2000" max="2100"></label>
+<label>Steuerposition<select name="tax_entry_id"><option value="0">Keine direkte Zuordnung</option>{% for e in tax_entries %}<option value="{{e.id}}">{{e.property_name}} · {{e.entry_date or ''}} · {{e.description or e.category}} · {{"%.2f"|format(e.amount)}} €</option>{% endfor %}</select></label>
+<label>Datei<input type="file" name="document" required></label>
+<label><input type="checkbox" name="run_ai" value="1" checked> Beleg mit konfigurierter KI analysieren</label>
+<label><input type="checkbox" name="send_paperless" value="1"> zusätzlich an Paperless senden</label>
+<label>Notiz<textarea name="notes"></textarea></label>
+<button>Dokument speichern</button></form></section>
+<section class="card"><h2>Steuerbelege</h2>
+<p>Dokumente können einem Objekt, Steuerjahr und optional direkt einer Steuerposition zugeordnet werden. Die KI schlägt Lieferant, Datum, Betrag, Kategorie, Objekt und passende Steuerposition vor; die Zuordnung wird erst nach deiner Bestätigung übernommen.</p>
+<p><a class="button" href="/documents/paperless-search?tax_year={{tax_year}}">Vorhandene Belege in Paperless suchen</a></p>
+</section></div>
+
+<section class="card"><h2>Dokumentenarchiv</h2>
+<table><tr><th>Titel</th><th>Kategorie</th><th>Mieter</th><th>Objekt</th><th>Steuerjahr</th><th>Steuerposition</th><th>Datei</th><th>KI-Vorschlag</th><th>Paperless</th><th>Prüfstatus</th><th>Datum</th><th></th></tr>
+{% for d in docs %}<tr>
+<td>{{d.title}}</td><td>{{d.category}}</td><td>{{d.tenant_name or '–'}}</td><td>{{d.property_name or '–'}}</td><td>{{d.tax_year or '–'}}</td>
+<td>{% if d.tax_entry_id %}{{d.tax_entry_description or 'Position'}} · {{"%.2f"|format(d.tax_entry_amount or 0)}} €{% else %}–{% endif %}</td>
+<td><a href="/documents/{{d.id}}/download">{{d.filename}}</a></td>
+<td>{% if d.receipt_ai %}
+{% if d.receipt_ai.supplier %}<b>{{d.receipt_ai.supplier}}</b><br>{% endif %}
+{{d.receipt_ai.category or '–'}}
+{% if d.receipt_ai.amount %} · {{"%.2f"|format(d.receipt_ai.amount)}} €{% endif %}
+{% if d.receipt_ai.document_date or d.receipt_ai.date %} · {{d.receipt_ai.document_date or d.receipt_ai.date}}{% endif %}
+{% if d.receipt_ai.suggested_property_name %}<br>Objekt: {{d.receipt_ai.suggested_property_name}}{% endif %}
+{% if d.receipt_ai.suggested_tax_entry_description %}<br>Position: {{d.receipt_ai.suggested_tax_entry_description}}{% endif %}
+{% if d.receipt_ai.suggested_property_id or d.receipt_ai.suggested_tax_entry_id %}
+<form method="post" action="/documents/{{d.id}}/apply-ai"><button>Vorschlag übernehmen</button></form>
+{% endif %}
+{% if d.receipt_ai.ai_error %}<br><small>KI-Fehler: {{d.receipt_ai.ai_error}}</small>{% endif %}
+{% else %}–{% endif %}</td>
+<td>{% if d.paperless_document_id and paperless_base_url %}<a href="{{paperless_base_url}}/documents/{{d.paperless_document_id}}/details" target="_blank">Dokument {{d.paperless_document_id}}</a>{% elif d.paperless_status %}{{d.paperless_status}}{% else %}–{% endif %}
+<form method="post" action="/documents/{{d.id}}/paperless-sync"><button>Paperless synchronisieren</button></form></td>
+<td><form method="post" action="/documents/{{d.id}}/review-status"><select name="status" onchange="this.form.submit()">
+{% for st in ['neu','geprüft','zugeordnet','erledigt'] %}<option value="{{st}}" {% if (d.review_status or 'neu')==st %}selected{% endif %}>{{st}}</option>{% endfor %}
+</select></form></td>
+<td>{{d.created_at}}</td>
+<td><form method="post" action="/documents/{{d.id}}/delete" onsubmit="return confirm('Dokument wirklich löschen?')"><button class="danger">Löschen</button></form></td>
+</tr>{% else %}<tr><td colspan="12">Keine Dokumente vorhanden.</td></tr>{% endfor %}</table></section>
+{% endblock %}

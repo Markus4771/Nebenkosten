@@ -1,0 +1,91 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Steuerberater-Unterlage</h1>
+
+<section class="panel">
+<h2>Jahresauswahl</h2>
+<form method="get" class="formgrid">
+<label>Steuerjahr
+<select name="year">
+{% for y in years %}<option value="{{y}}" {% if y|string==year|string %}selected{% endif %}>{{y}}</option>{% endfor %}
+{% if not years %}<option value="{{year}}">{{year}}</option>{% endif %}
+</select></label>
+<label>Objekt
+<select name="property_id"><option value="0">Alle Objekte</option>
+{% for p in properties %}<option value="{{p.id}}" {% if p.id==property_id %}selected{% endif %}>{{p.name}}</option>{% endfor %}
+</select></label>
+<div><button>Anzeigen</button></div>
+</form>
+<p><a class="button" href="/tax-advisor/{{year}}/pdf" target="_blank">Steuerberater-PDF {{year}}</a>
+<a class="button" href="/tax-advisor/{{year}}/csv">CSV-Export {{year}}</a>
+<a class="button" href="/tax-advisor/{{year}}/package">Steuerberater-Paket ZIP</a></p>
+<p>Die Ausgaben sind Arbeitsunterlagen. Die endgültige steuerliche Einordnung erfolgt durch den Steuerberater.</p>
+</section>
+
+<section class="panel">
+<h2>Steuerjahr-Assistent {{year}}</h2>
+<p><b>Einnahmen:</b> {{"%.2f"|format(summary.income)}} € · <b>Aufwendungen:</b> {{"%.2f"|format(summary.expense)}} € · <b>Prüfhinweise:</b> {{summary.issues|length}}</p>
+{% if summary.issues %}<ul>{% for issue in summary.issues %}<li>{{issue}}</li>{% endfor %}</ul>{% else %}<p>Keine automatischen Warnungen.</p>{% endif %}
+<p><form method="post" action="/tax-advisor/{{year}}/import-payments" class="inline"><button>Mietzahlungen {{year}} übernehmen</button></form></p>
+{% if closure and closure.status=='abgeschlossen' %}
+<p><b>Status: Steuerjahr abgeschlossen</b> {{closure.closed_at or ''}}</p>
+<form method="post" action="/tax-advisor/{{year}}/reopen"><button>Steuerjahr wieder öffnen</button></form>
+{% else %}
+<form method="post" action="/tax-advisor/{{year}}/close"><label>Abschlussnotiz <input name="notes"></label><button>Steuerjahr abschließen</button></form>
+{% endif %}
+</section>
+
+<section class="panel"><h3>Fehlende Belege</h3>
+{% if summary.missing_receipts %}
+<table><thead><tr><th>Objekt</th><th>Position</th><th>Betrag</th></tr></thead><tbody>
+{% for x in summary.missing_receipts %}<tr><td>{{x.property_name}}</td><td>{{x.description}}</td><td>{{"%.2f"|format(x.amount)}} €</td></tr>{% endfor %}
+</tbody></table>
+<p><a href="/documents?tax_year={{year}}">Belege zuordnen</a></p>
+{% else %}<p>Für alle erfassten Aufwendungen ist mindestens ein Beleg zugeordnet.</p>{% endif %}
+</section>
+
+<section class="panel"><h2>Automatische Übernahme</h2>
+<p>Bereits erfasste Kostenpositionen eines Objekts können als steuerliche Prüfposten übernommen und anhand ihrer Bezeichnung vorgeschlagen kategorisiert werden.</p>
+{% for p in properties %}<form method="post" action="/tax-advisor/import-costs" class="inline"><input type="hidden" name="year" value="{{year}}"><input type="hidden" name="property_id" value="{{p.id}}"><button>Kosten {{p.name}} übernehmen</button> <a href="/tax-advisor/{{year}}/property/{{p.id}}/pdf" target="_blank">Anlage-V-Vorbereitung PDF</a></form>{% endfor %}
+</section>
+
+<section class="panel">
+<h2>Einnahme / Aufwand erfassen</h2>
+<form method="post" action="/tax-advisor/entry" class="formgrid">
+<label>Objekt<select name="property_id" required>{% for p in properties %}<option value="{{p.id}}">{{p.name}}</option>{% endfor %}</select></label>
+<label>Steuerjahr<input name="tax_year" type="number" value="{{year}}" min="2000" max="2100" required></label>
+<label>Datum<input name="entry_date" type="date"></label>
+<label>Typ<select name="entry_type"><option value="income">Einnahme</option><option value="expense">Aufwand</option></select></label>
+<label>Kategorie<select name="category">{% for key,label in categories.items() %}<option value="{{key}}">{{label}}</option>{% endfor %}</select></label>
+<label>Betrag €<input name="amount" type="number" min="0" step="0.01" required></label>
+<label class="full">Beschreibung<input name="description" placeholder="z. B. Heizungsreparatur, Darlehen Bank ..."></label>
+<label>Steuerliche Einordnung<select name="tax_treatment">
+<option value="review">durch Steuerberater prüfen</option>
+<option value="potentially_deductible">potenziell abziehbar</option>
+<option value="not_deductible">nicht abziehbar</option>
+</select></label>
+<label>Notiz<input name="notes"></label>
+<div class="full"><button>Eintrag speichern</button></div>
+</form>
+<p><b>Hinweis Erhaltungsrücklage:</b> Einzahlungen werden vom Programm immer als Prüfposten behandelt und nicht automatisch als Werbungskosten eingestuft.</p>
+</section>
+
+<section class="panel">
+<h2>Erfasste Daten {{year}}</h2>
+{% if entries %}
+<table><thead><tr><th>Datum</th><th>Objekt</th><th>Typ</th><th>Kategorie</th><th>Beschreibung</th><th>Betrag</th><th>Einordnung</th><th></th></tr></thead>
+<tbody>{% for e in entries %}<tr>
+<td>{{e.entry_date or ''}}</td><td>{{e.property_name}}</td>
+<td>{% if e.entry_type=='income' %}Einnahme{% else %}Aufwand{% endif %}</td>
+<td>{{categories.get(e.category,e.category)}}</td><td>{{e.description or ''}}</td>
+<td>{{"%.2f"|format(e.amount)}} €</td>
+<td>{% if e.tax_treatment=='potentially_deductible' %}potenziell abziehbar{% elif e.tax_treatment=='not_deductible' %}nicht abziehbar{% else %}prüfen{% endif %}</td>
+<td><form method="post" action="/tax-advisor/entry/{{e.id}}/delete" onsubmit="return confirm('Eintrag löschen?')"><button>Löschen</button></form></td>
+</tr>{% endfor %}</tbody></table>
+{% else %}<p>Noch keine zusätzlichen Steuerdaten für diese Auswahl erfasst.</p>{% endif %}
+</section>
+
+<section class="panel">
+<h2>Für den Steuerberater zusätzlich bereithalten</h2>
+<p>Mietverträge und Zahlungsnachweise, Hausverwaltungsabrechnungen, Reparatur- und Handwerkerrechnungen, Darlehensunterlagen, Anschaffungs-/AfA-Unterlagen sowie Belege zu Grundsteuer, Versicherungen und sonstigen Aufwendungen.</p>
+</section>
+{% endblock %}
