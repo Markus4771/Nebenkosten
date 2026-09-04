@@ -5,10 +5,12 @@ mkdir -p /var/lib/nebenkostenabrechnung/uploads /var/lib/nebenkostenabrechnung/d
 chown -R nebenkosten:nebenkosten /var/lib/nebenkostenabrechnung /opt/nebenkostenabrechnung
 chmod 0700 /var/lib/nebenkostenabrechnung/secrets
 chmod 0750 /var/lib/nebenkostenabrechnung/csv-previews
+FIRST_PASSWORD=""
 if [ ! -f /etc/default/nebenkostenabrechnung ]; then
   umask 077
   SECRET=$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')
   PASS=$(python3 -c 'import secrets; print(secrets.token_urlsafe(12))')
+  FIRST_PASSWORD="$PASS"
   printf 'NEBENKOSTEN_SESSION_SECRET=%s\nNEBENKOSTEN_ADMIN_PASSWORD=%s\n' "$SECRET" "$PASS" > /etc/default/nebenkostenabrechnung
   umask 022
 fi
@@ -21,3 +23,10 @@ install -m 0755 /opt/nebenkostenabrechnung/packaging/debian/nebenkosten-install-
 install -m 0440 /opt/nebenkostenabrechnung/packaging/debian/nebenkosten-update-sudoers /etc/sudoers.d/nebenkosten-update
 systemctl daemon-reload
 systemctl enable --now nebenkostenabrechnung.service || true
+echo "Installation abgeschlossen. Weboberfläche: http://SERVER-IP:8080"
+echo "Erster Benutzer: admin"
+if [ -n "$FIRST_PASSWORD" ]; then
+  echo "Einmaliges Startpasswort: $FIRST_PASSWORD"
+else
+  echo "Das Startpasswort wurde bei einer früheren Installation erzeugt."
+fi

@@ -1,0 +1,31 @@
+name: Release Debian package
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify tag and application version
+        run: test "${GITHUB_REF_NAME#v}" = "$(cat version.txt)"
+      - name: Install test dependencies
+        run: pip install -r requirements.txt pytest
+      - name: Run tests
+        run: pytest -q
+      - name: Install package tools
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev
+      - name: Build Debian package
+        run: ./scripts/build_deb.sh
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes --verify-tag

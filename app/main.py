@@ -1,4 +1,5 @@
 import os, json, uuid, csv
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, FileResponse, Response
@@ -21,14 +22,18 @@ from .receipt_matching import match_property, match_tax_entry
 from .secret_store import hydrate as hydrate_settings, save as save_secrets
 from .diagnostics import production_checks
 from .paperless import test_connection as paperless_test, upload_document as paperless_upload, task_status as paperless_task_status, document_url as paperless_document_url, search_documents as paperless_search, get_document as paperless_get_document, download_document as paperless_download
+from . import __version__
 
-app=FastAPI(title='Nebenkostenabrechnung',version='2.9.1')
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    init_db()
+    yield
+
+
+app=FastAPI(title='Nebenkostenabrechnung',version=__version__,lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('NEBENKOSTEN_SESSION_SECRET','change-this-secret-in-production'), same_site='lax', https_only=False)
 app.mount('/static', StaticFiles(directory='app/static'), name='static')
 templates=Jinja2Templates(directory='app/templates')
-
-@app.on_event('startup')
-def startup(): init_db()
 
 def current_user(request: Request):
     uid=request.session.get('user_id')
@@ -64,7 +69,7 @@ def forbidden(request, exc):
 
 @app.get('/health')
 def health():
-    return {'ok':True,'service':'nebenkostenabrechnung','version':'2.9.1'}
+    return {'ok':True,'service':'nebenkostenabrechnung','version':__version__}
 
 
 @app.get('/login',response_class=HTMLResponse)

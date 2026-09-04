@@ -5,7 +5,7 @@ VERSION="$(cat "$ROOT/version.txt")"
 BUILD_ROOT="$(mktemp -d /tmp/nebenkosten-deb.XXXXXX)"
 trap 'rm -rf "$BUILD_ROOT"' EXIT
 PKG="$BUILD_ROOT/nebenkostenabrechnung_${VERSION}_all"
-rm -rf "$ROOT/dist"; mkdir -p "$PKG/DEBIAN" "$PKG/opt/nebenkostenabrechnung" "$PKG/etc/systemd/system" "$ROOT/dist"
+rm -rf "$ROOT/dist"; mkdir -p "$PKG/DEBIAN" "$PKG/opt/nebenkostenabrechnung" "$PKG/etc/systemd/system" "$PKG/usr/share/doc/nebenkostenabrechnung" "$ROOT/dist"
 chmod 0755 "$PKG/DEBIAN"
 cp "$ROOT/packaging/debian/control" "$PKG/DEBIAN/control"
 sed -i "s/^Version:.*/Version: $VERSION/" "$PKG/DEBIAN/control"
@@ -14,6 +14,9 @@ cp -a "$ROOT/app" "$ROOT/requirements.txt" "$ROOT/run.py" "$ROOT/packaging" "$PK
 find "$PKG/opt/nebenkostenabrechnung" -type d -name __pycache__ -prune -exec rm -rf {} +
 find "$PKG/opt/nebenkostenabrechnung" -type f -name '*.pyc' -delete
 cp "$ROOT/nebenkostenabrechnung.service" "$PKG/etc/systemd/system/"
+install -m 0644 "$ROOT/README.md" "$ROOT/INSTALL.md" "$ROOT/BEDIENUNGSANLEITUNG.md" "$ROOT/LICENSE" "$PKG/usr/share/doc/nebenkostenabrechnung/"
+install -m 0644 "$ROOT/CHANGELOG.md" "$PKG/usr/share/doc/nebenkostenabrechnung/changelog"
+gzip -9n "$PKG/usr/share/doc/nebenkostenabrechnung/changelog"
 find "$PKG/DEBIAN" -type d -exec chmod 0755 {} +
 dpkg-deb --build --root-owner-group "$PKG" "$ROOT/dist/nebenkostenabrechnung_${VERSION}_all.deb"
 sha256sum "$ROOT/dist/nebenkostenabrechnung_${VERSION}_all.deb" > "$ROOT/dist/nebenkostenabrechnung_${VERSION}_all.deb.sha256"

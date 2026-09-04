@@ -15,6 +15,18 @@ def test_version_is_consistent():
     assert health()["version"] == __version__
 
 
+def test_release_documentation_uses_current_version():
+    for filename in ("README.md", "INSTALL.md", "PROJECT.md", "BEDIENUNGSANLEITUNG.md", "CHANGELOG.md"):
+        assert __version__ in (ROOT / filename).read_text(encoding="utf-8")
+
+
+def test_direct_installer_includes_runtime_features():
+    source = (ROOT / "install.sh").read_text(encoding="utf-8")
+    assert "smbclient" in source
+    assert "nebenkosten-install-update" in source
+    assert "/var/lib/nebenkostenabrechnung/secrets" in source
+
+
 def test_all_templates_compile():
     template_dir = ROOT / "app" / "templates"
     environment = Environment(loader=FileSystemLoader(template_dir))

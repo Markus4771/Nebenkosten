@@ -2,9 +2,9 @@
 set -euo pipefail
 if [[ $EUID -ne 0 ]]; then echo "Bitte mit sudo ausführen."; exit 1; fi
 apt-get update
-apt-get install -y python3-venv tesseract-ocr tesseract-ocr-deu poppler-utils
+apt-get install -y python3-venv tesseract-ocr tesseract-ocr-deu poppler-utils smbclient sudo
 id nebenkosten >/dev/null 2>&1 || useradd --system --home /var/lib/nebenkostenabrechnung --shell /usr/sbin/nologin nebenkosten
-mkdir -p /opt/nebenkostenabrechnung /var/lib/nebenkostenabrechnung /var/lib/nebenkostenabrechnung/uploads /var/lib/nebenkostenabrechnung/documents /var/lib/nebenkostenabrechnung/backups /var/lib/nebenkostenabrechnung/updates
+mkdir -p /opt/nebenkostenabrechnung /var/lib/nebenkostenabrechnung /var/lib/nebenkostenabrechnung/uploads /var/lib/nebenkostenabrechnung/documents /var/lib/nebenkostenabrechnung/backups /var/lib/nebenkostenabrechnung/updates /var/lib/nebenkostenabrechnung/secrets /var/lib/nebenkostenabrechnung/csv-previews
 cp -a app requirements.txt run.py /opt/nebenkostenabrechnung/
 python3 -m venv /opt/nebenkostenabrechnung/venv
 /opt/nebenkostenabrechnung/venv/bin/pip install --upgrade pip
@@ -24,7 +24,11 @@ CFG
 fi
 
 cp nebenkostenabrechnung.service /etc/systemd/system/
+install -m 0755 packaging/debian/nebenkosten-install-update /usr/local/sbin/nebenkosten-install-update
+install -m 0440 packaging/debian/nebenkosten-update-sudoers /etc/sudoers.d/nebenkosten-update
 chown -R nebenkosten:nebenkosten /var/lib/nebenkostenabrechnung /opt/nebenkostenabrechnung
+chmod 0700 /var/lib/nebenkostenabrechnung/secrets
+chmod 0750 /var/lib/nebenkostenabrechnung/csv-previews
 systemctl daemon-reload
 systemctl enable --now nebenkostenabrechnung.service
 echo "Installation abgeschlossen. Weboberfläche: http://SERVER-IP:8080"

@@ -1,9 +1,11 @@
 import json, os, re, subprocess, urllib.request
 from pathlib import Path
-CURRENT_VERSION='2.9.1'; DEFAULT_REPO='Markus4771/Nebenkosten'; STAGING_DIR=Path(os.getenv('NEBENKOSTEN_UPDATE_DIR','/var/lib/nebenkostenabrechnung/updates'))
+from . import __version__
+
+CURRENT_VERSION=__version__; DEFAULT_REPO='Markus4771/Nebenkosten'; STAGING_DIR=Path(os.getenv('NEBENKOSTEN_UPDATE_DIR','/var/lib/nebenkostenabrechnung/updates'))
 def version_key(v): return tuple(int(x) for x in re.findall(r'\d+',v)[:3] or [0])
 def headers(token=None):
-    h={'Accept':'application/vnd.github+json','User-Agent':'Nebenkostenabrechnung/2.9.1'}
+    h={'Accept':'application/vnd.github+json','User-Agent':f'Nebenkostenabrechnung/{CURRENT_VERSION}'}
     if token: h['Authorization']=f'Bearer {token}'
     return h
 def check_github_release(repo=DEFAULT_REPO,token=None):
