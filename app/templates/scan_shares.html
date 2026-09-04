@@ -1,0 +1,42 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Scan-Freigaben</h1>
+<p>Jeder Benutzer erhält einen eigenen SMB-Zugang und einen persönlichen Scan-Ordner. Das SMB-Passwort ist unabhängig vom Web-Login.</p>
+{% if message %}<p class="success">{{message}}</p>{% endif %}
+{% if error %}<p class="error">{{error}}</p>{% endif %}
+
+<section class="panel"><h2>Meine Scan-Freigabe</h2>
+<form method="post" action="/scan-share" class="formgrid">
+<label>Aktiviert<select name="enabled"><option value="0" {% if not scan.enabled %}selected{% endif %}>Nein</option><option value="1" {% if scan.enabled %}selected{% endif %}>Ja</option></select></label>
+<label>Server / Hostname<input name="server_name" value="{{scan.server_name or ''}}" placeholder="leer = aktueller Server"></label>
+<label>Freigabename<input name="share_name" value="{{scan.share_name}}" required></label>
+<label>Persönlicher Ordner<input name="folder_name" value="{{scan.folder_name}}" required></label>
+<label>SMB-Benutzer<input name="smb_username" value="{{scan.smb_username}}" required></label>
+<label>SMB-Passwort<input type="text" name="smb_password" value="{{scan.password}}" minlength="8" autocomplete="new-password"></label>
+<label class="full">Freigabepfad<input value="{{scan_path}}" readonly></label>
+<div class="full"><button>Speichern und Freigabe anwenden</button></div>
+</form>
+<form method="post" action="/scan-share/regenerate" class="inline"><button>Neues SMB-Passwort erzeugen</button></form>
+<form method="post" action="/scan-share/test" class="inline"><button>Verbindung testen</button></form>
+</section>
+
+{% if current_user.is_admin %}
+<p><a href="/scan-shares">Alle Benutzer-Freigaben verwalten</a></p>
+{% endif %}
+
+{% if users is not none %}
+<section class="panel"><h2>Benutzer-Freigaben</h2>
+{% for u in users %}
+<details><summary><b>{{u.display_name}}</b> ({{u.username}}) – {{'aktiv' if u.enabled else 'inaktiv'}}</summary>
+<form method="post" action="/scan-shares/{{u.id}}" class="formgrid">
+<label>Aktiviert<select name="enabled"><option value="0" {% if not u.enabled %}selected{% endif %}>Nein</option><option value="1" {% if u.enabled %}selected{% endif %}>Ja</option></select></label>
+<label>Server / Hostname<input name="server_name" value="{{u.server_name or ''}}"></label>
+<label>Freigabename<input name="share_name" value="{{u.share_name}}" required></label>
+<label>Ordner<input name="folder_name" value="{{u.folder_name}}" required></label>
+<label>SMB-Benutzer<input name="smb_username" value="{{u.smb_username}}" required></label>
+<label>SMB-Passwort<input type="text" name="smb_password" value="{{u.password}}" minlength="8" autocomplete="new-password"></label>
+<div class="full"><button>Speichern</button></div>
+</form></details>
+{% endfor %}
+</section>
+{% endif %}
+{% endblock %}
