@@ -4,6 +4,6 @@ Section: web
 Priority: optional
 Architecture: all
 Maintainer: Nebenkostenabrechnung
-Depends: python3, python3-venv, tesseract-ocr, tesseract-ocr-deu, poppler-utils, smbclient, sudo
+Depends: python3, python3-venv, tesseract-ocr, tesseract-ocr-deu, poppler-utils, smbclient, samba, sudo
 Description: Webanwendung zur Nebenkostenabrechnung und KI-gestützten Analyse
- Mehrbenutzerfähige Anwendung mit OCR, Dokumentenverwaltung, Backup und PDF-Ausgabe.
+ Mehrbenutzerfähige Anwendung mit OCR, Dokumentenverwaltung, persönlichen SMB-Scan-Freigaben, Backup und PDF-Ausgabe.
