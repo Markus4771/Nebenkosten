@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT=/var/lib/nebenkostenabrechnung/scan
+GROUP=nebenkosten-scan
+
+fail(){ echo "$*" >&2; exit 2; }
+[[ ${1:-} == configure ]] || fail "Nur 'configure' ist erlaubt."
+UID_ARG=${2:-}; SMB_USER=${3:-}; FOLDER=${4:-}; ENABLED=${5:-}
+[[ "$UID_ARG" =~ ^[0-9]+$ ]] || fail "Ungültige Benutzer-ID."
+[[ "$SMB_USER" =~ ^[a-z][a-z0-9_-]{2,30}$ ]] || fail "Ungültiger SMB-Benutzername."
+[[ "$FOLDER" =~ ^[A-Za-z0-9._-]{1,64}$ ]] || fail "Ungültiger Ordnername."
+[[ "$ENABLED" == 0 || "$ENABLED" == 1 ]] || fail "Ungültiger Aktivstatus."
+IFS= read -r PASSWORD || true
+[[ ${#PASSWORD} -ge 8 ]] || fail "SMB-Passwort muss mindestens 8 Zeichen haben."
+
+getent group "$GROUP" >/dev/null || groupadd --system "$GROUP"
+mkdir -p "$ROOT"
+chown root:"$GROUP" "$ROOT"
+chmod 0711 "$ROOT"
+
+if ! id "$SMB_USER" >/dev/null 2>&1; then
+  useradd --system --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin --gid "$GROUP" "$SMB_USER"
+else
+  usermod -a -G "$GROUP" "$SMB_USER"
+fi
+
+USER_DIR="$ROOT/$FOLDER"
+mkdir -p "$USER_DIR/Eingang" "$USER_DIR/Verarbeitet"
+chown -R "$SMB_USER":"$GROUP" "$USER_DIR"
+chmod 0700 "$USER_DIR" "$USER_DIR/Eingang" "$USER_DIR/Verarbeitet"
+printf '%s\n%s\n' "$PASSWORD" "$PASSWORD" | smbpasswd -s -a "$SMB_USER" >/dev/null
+if [[ "$ENABLED" == 1 ]]; then
+  smbpasswd -e "$SMB_USER" >/dev/null || true
+else
+  smbpasswd -d "$SMB_USER" >/dev/null || true
+fi
+systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
