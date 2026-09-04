@@ -1,6 +1,6 @@
 [Unit]
 Description=Nebenkostenabrechnung
-After=network.target
+After=network.target smbd.service
 
 [Service]
 User=nebenkosten
@@ -8,7 +8,7 @@ Group=nebenkosten
 WorkingDirectory=/opt/nebenkostenabrechnung
 Environment=NEBENKOSTEN_DB=/var/lib/nebenkostenabrechnung/nebenkosten.db
 EnvironmentFile=-/etc/default/nebenkostenabrechnung
-ExecStart=/opt/nebenkostenabrechnung/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080
+ExecStart=/opt/nebenkostenabrechnung/venv/bin/uvicorn app.scan_main:app --host 0.0.0.0 --port 8080
 Restart=on-failure
 
 [Install]
