@@ -3,7 +3,7 @@ import json, os
 from pathlib import Path
 
 SECRET_DIR=Path(os.getenv("NEBENKOSTEN_SECRET_DIR","/var/lib/nebenkostenabrechnung/secrets"))
-SECRET_FIELDS=("ai_api_key","paperless_token","smtp_password")
+SECRET_FIELDS=("ai_api_key","paperless_token","smtp_password","scan_smb_password")
 
 def _path(user_id:int)->Path:
     return SECRET_DIR/f"user-{int(user_id)}.json"
@@ -48,7 +48,7 @@ def migrate_plaintext(conn):
     for row in rows:
         uid=row[0]
         values={}
-        for field,value in zip(SECRET_FIELDS,row[1:]):
+        for field,value in zip(("ai_api_key","paperless_token","smtp_password"),row[1:]):
             if value and value!="__secret_store__":
                 values[field]=value
         if values:
