@@ -42,7 +42,7 @@ Der Installer erzeugt bei der ersten Installation ein zufälliges Passwort für 
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt pytest
-pytest -q
+python -m pytest -q
 ```
 
 Debian-Paket bauen:
